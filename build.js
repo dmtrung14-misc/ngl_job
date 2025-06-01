@@ -36,7 +36,10 @@ const manifest = {
   background: {
     service_worker: "background.js"
   },
-  key: process.env.PUBLIC_KEY_BASE64
+  key: process.env.PUBLIC_KEY_BASE64,
+  content_security_policy: {
+    extension_pages: "script-src 'self'; object-src 'self'"
+}
 };
 
 fs.writeFileSync(
@@ -47,6 +50,7 @@ fs.writeFileSync(
 // 2. Bundle JS files with env variables injected
 const define = {
   'process.env.SPREADSHEET_ID': `"${process.env.SPREADSHEET_ID}"`,
+  'SPREADSHEET_ID': `"${process.env.SPREADSHEET_ID}"`
 };
 
 esbuild.buildSync({
@@ -65,13 +69,37 @@ esbuild.buildSync({
   minify: false,
 });
 
+// --- Copy report.html ---
+
+// --- Bundle report.js ---
+esbuild.buildSync({
+  entryPoints: ['src/report.js'],
+  outfile: path.join(distDir, 'report.js'),
+  bundle: true,
+  minify: false,
+  define: {
+    'process.env.SPREADSHEET_ID': `"${process.env.SPREADSHEET_ID}"`,
+  },
+});
+
+
 console.log("✅ JS bundled");
 
 // 3. Copy static files
 const copy = (src, dest) => fs.copyFileSync(path.join(__dirname, src), path.join(__dirname, dest));
 
 copy('src/popup.html', 'dist/popup.html');
-copy('src/firebase-config.js', 'dist/firebase-config.js');
+copy('src/report.html', 'dist/report.html');
+
+// copy('src/firebase-config.js', 'dist/firebase-config.js');
+esbuild.buildSync({
+  entryPoints: ['src/firebase-config.js'],
+  outfile: 'dist/firebase-config.js',
+  bundle: true,
+  define,
+  minify: false,
+});
+
 
 // Copy icons folder
 fs.mkdirSync(path.join(distDir, 'icons'));

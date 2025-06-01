@@ -1,4 +1,6 @@
-// import { SPREADSHEET_ID, GOOGLE_CLIENT_ID } from "./config.js"
+// import { ref, get } from "firebase/database";
+// import { database } from "./firebase-config.js";
+
 document.addEventListener('DOMContentLoaded', () => {
   const companyInput = document.getElementById('company');
   const linkInput = document.getElementById('link');
@@ -7,32 +9,40 @@ document.addEventListener('DOMContentLoaded', () => {
   const dateInput = document.getElementById('date');
 
   // Prefill link and date
-  chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     linkInput.value = tabs[0]?.url || '';
   });
   const today = new Date();
-  dateInput.value = `${today.getMonth()+1}/${today.getDate()}/${today.getFullYear()}`;
+  dateInput.value = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
 
-  // When company changes, fetch from Firebase
-  companyInput.addEventListener('change', () => {
+  // Fetch company data from Firebase Realtime DB REST API
+  async function fetchCompanyData(company) {
+    const databaseURL = 'https://ngl-job-board-d5bd8-default-rtdb.firebaseio.com';
+    const url = `${databaseURL}/companies/${encodeURIComponent(company)}.json`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network response was not ok');
+      return await response.json();
+    } catch (err) {
+      console.error('Firebase REST fetch error:', err);
+      return null;
+    }
+  }
+
+  companyInput.addEventListener('change', async () => {
     const company = companyInput.value.trim();
     if (!company) return;
-    // Lookup company in Firebase
-    const compRef = firebase.database().ref('companies/' + company);
-    compRef.once('value').then(snapshot => {
-      const data = snapshot.val();
-      if (data) {
-        // Auto-fill if contacts exist
-        if (data.referrers) {
-          const firstRef = Object.values(data.referrers)[0];
-          referrerInput.value = firstRef.name || '';
-        }
-        if (data.recruiters) {
-          const firstRec = Object.values(data.recruiters)[0];
-          recruiterInput.value = firstRec.name || '';
-        }
+    const data = await fetchCompanyData(company);
+    if (data) {
+      if (data.referrers) {
+        const firstRef = Object.values(data.referrers)[0];
+        referrerInput.value = firstRef.name || '';
       }
-    }).catch(err => console.error('Firebase fetch error:', err));
+      if (data.recruiters) {
+        const firstRec = Object.values(data.recruiters)[0];
+        recruiterInput.value = firstRec.name || '';
+      }
+    }
   });
 
   // Add Job button handler
@@ -49,7 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       await insertJobToSheet(company, link, referrer, recruiter, date);
       alert('Job added to Sheet!');
-      // Clear form
       companyInput.value = '';
       referrerInput.value = '';
       recruiterInput.value = '';
@@ -59,17 +68,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // “Report Employee” button opens report.html
+  // Report Employee button
   document.getElementById('goReport').addEventListener('click', () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('report.html') });
   });
 });
 
-// Uses Google Sheets API to insert a new row at top (row 2) and fill it
+// Uses Google Sheets API to insert a new row at top (row 2) and fill it atomically
 async function insertJobToSheet(company, link, referrer, recruiter, date) {
   // Get OAuth token (interactive)
   const token = await new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken({interactive: true}, (token) => {
+    chrome.identity.getAuthToken({ interactive: true }, (token) => {
       if (chrome.runtime.lastError || !token) {
         reject(new Error(chrome.runtime.lastError?.message || 'Auth failed'));
       } else {
@@ -77,36 +86,60 @@ async function insertJobToSheet(company, link, referrer, recruiter, date) {
       }
     });
   });
+
   const headers = {
     'Authorization': 'Bearer ' + token,
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   };
-  const spreadsheetId = SPREADSHEET_ID || '1wm5K1d9ScRhvLNYbSXhQuJjFnGr0jPrL0eJfn2bMYKM';  // <-- set your Sheet ID
 
-  // 1. Insert a blank row at position 1 (below header row)
-  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      requests: [{
+  const spreadsheetId = SPREADSHEET_ID || '1wm5K1d9ScRhvLNYbSXhQuJjFnGr0jPrL0eJfn2bMYKM'; // your Sheet ID
+
+  const body = {
+    requests: [
+      {
         insertDimension: {
           range: {
-            sheetId: 0,         // assuming first sheet; adjust if needed
-            dimension: "ROWS",
+            sheetId: 0, // first sheet; adjust if needed
+            dimension: 'ROWS',
             startIndex: 1,
-            endIndex: 2
+            endIndex: 2,
           },
-          inheritFromBefore: false
-        }
-      }]
-    })
+          inheritFromBefore: false,
+        },
+      },
+      {
+        updateCells: {
+          start: {
+            sheetId: 0,
+            rowIndex: 1,
+            columnIndex: 0,
+          },
+          rows: [
+            {
+              values: [
+                { userEnteredValue: { stringValue: company } },
+                { userEnteredValue: { stringValue: link } },
+                { userEnteredValue: { stringValue: referrer } },
+                { userEnteredValue: { stringValue: recruiter } },
+                { userEnteredValue: { stringValue: date } },
+                { userEnteredValue: { stringValue: 'No Action' } },
+              ],
+            },
+          ],
+          fields: 'userEnteredValue',
+        },
+      },
+    ],
+  };
+
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
   });
 
-  // 2. Write the job data into the new row (A2:F2)
-  const values = [[company, link, referrer, recruiter, date, "No Action"]];
-  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A2:F2?valueInputOption=USER_ENTERED`, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify({ values })
-  });
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(`Sheets API error: ${errorData.error.message}`);
+  }
 }
