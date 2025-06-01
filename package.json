@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rm -rf dist",
-    "build": "npm run clean && mkdir dist && cp -r src/* dist/ && cp -r icons dist/ && node build.js"
+    "build": "npm run clean && node build.js"
   },
   "keywords": [
     "chrome-extension",
@@ -19,5 +19,8 @@
   "dependencies": {
     "dotenv": "^16.5.0",
     "firebase": "^11.8.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.5"
   }
 }

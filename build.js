@@ -1,7 +1,14 @@
 const fs = require("fs");
 const path = require("path");
-require("dotenv").config(); // loads from .env
+const esbuild = require("esbuild");
+require("dotenv").config();
 
+// Clean dist folder
+const distDir = path.join(__dirname, "dist");
+fs.rmSync(distDir, { recursive: true, force: true });
+fs.mkdirSync(distDir);
+
+// 1. Generate manifest.json
 const manifest = {
   manifest_version: 3,
   name: "New Grad Life (NGL) - Easy Job Tracker",
@@ -33,11 +40,43 @@ const manifest = {
 };
 
 fs.writeFileSync(
-  path.join(__dirname, "dist", "manifest.json"),
+  path.join(distDir, "manifest.json"),
   JSON.stringify(manifest, null, 2)
 );
 
-// replacing SPREADSHEET_ID so no need to include config.js
-let bg = fs.readFileSync(path.join(__dirname, 'src', 'background.js'), 'utf-8');
-bg = bg.replace(/const SPREADSHEET_ID = .*;/, `const SPREADSHEET_ID = "${process.env.SPREADSHEET_ID}";`);
-fs.writeFileSync(path.join(__dirname, 'dist', 'background.js'), bg);
+// 2. Bundle JS files with env variables injected
+const define = {
+  'process.env.SPREADSHEET_ID': `"${process.env.SPREADSHEET_ID}"`,
+};
+
+esbuild.buildSync({
+  entryPoints: ['src/background.js'],
+  outfile: 'dist/background.js',
+  bundle: true,
+  define,
+  minify: false,
+});
+
+esbuild.buildSync({
+  entryPoints: ['src/popup.js'],
+  outfile: 'dist/popup.js',
+  bundle: true,
+  define,
+  minify: false,
+});
+
+console.log("✅ JS bundled");
+
+// 3. Copy static files
+const copy = (src, dest) => fs.copyFileSync(path.join(__dirname, src), path.join(__dirname, dest));
+
+copy('src/popup.html', 'dist/popup.html');
+copy('src/firebase-config.js', 'dist/firebase-config.js');
+
+// Copy icons folder
+fs.mkdirSync(path.join(distDir, 'icons'));
+for (const size of [16, 48, 128]) {
+  copy(`icons/icon${size}.png`, `dist/icons/icon${size}.png`);
+}
+
+console.log("✅ Static files copied");

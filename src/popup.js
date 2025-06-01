@@ -1,4 +1,4 @@
-import { SPREADSHEET_ID, GOOGLE_CLIENT_ID } from "./config.js"
+// import { SPREADSHEET_ID, GOOGLE_CLIENT_ID } from "./config.js"
 document.addEventListener('DOMContentLoaded', () => {
   const companyInput = document.getElementById('company');
   const linkInput = document.getElementById('link');
