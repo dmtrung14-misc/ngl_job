@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Add Job Entry</title>
+  <style>
+    body { font-family: Arial; width: 300px; margin: 10px; }
+    label { display: block; margin-top: 8px; }
+    input, select, button { width: 100%; padding: 5px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <h3>Add Job Entry</h3>
+  <label>Company:
+    <input type="text" id="company" required>
+  </label>
+  <label>Link:
+    <input type="text" id="link" required>
+  </label>
+  <label>Referrer:
+    <input type="text" id="referrer">
+  </label>
+  <label>Recruiter Email:
+    <input type="email" id="recruiter">
+  </label>
+  <!-- Hidden date field -->
+  <input type="hidden" id="date">
+  <button id="addJobButton">Add Job</button>
+  <hr>
+  <button id="goReport">Report Employee</button>
+
+  <script src="firebase-config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

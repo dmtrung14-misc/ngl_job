@@ -1,0 +1,23 @@
+{
+  "name": "ngl_job",
+  "version": "1.0.0",
+  "description": "A Chrome extension for tracking job applications and storing data in Google Sheets using Firebase",
+  "main": "build.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "rm -rf dist",
+    "build": "npm run clean && mkdir dist && cp -r src/* dist/ && cp -r icons dist/ && node build.js"
+  },
+  "keywords": [
+    "chrome-extension",
+    "job-tracker",
+    "google-sheets",
+    "firebase"
+  ],
+  "author": "Trung Dang",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "firebase": "^11.8.1"
+  }
+}
