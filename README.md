@@ -2,19 +2,7 @@
 ![Static Badge](https://img.shields.io/badge/STATUS-BUILD_SUCCESS-green)
 
 <br />
-<style>
-@media (prefers-color-scheme: dark) {
-    .themed-border {
-        border-color: white !important;
-    }
-}
-@media (prefers-color-scheme: light) {
-    .themed-border {
-        border-color: black !important;
-    }
-}
-</style>
-<div align="center" class="themed-border" style="border-style: solid; border-width: 1px;">
+<div align="center" style="border-style: solid; border-width: 1px; border-color: white">
     
 <h3 align="center"><image align="center" src="icons/icon48.png" style="width: 60px"/> ngl-job-board</h3>
   <p align="center">
