@@ -65,4 +65,9 @@ The extension should now be ready for usage.
 - [ ] Autofilling Company Name
 
 ### 4. Contributions
-Contributions are welcomed. The product, however, is delivered as is. Further supports will NOT be provided.
+The product is delivered as is. Further support will NOT be provided.
+
+However, you're welcome to contribute. My bigger vision for this project will be to make a productivity tool for teams where you can share anything to a shared database in one click.
+
+Feel free to fork this repository and build on top of this project. A more universal version will (probably) not come soon.
+
