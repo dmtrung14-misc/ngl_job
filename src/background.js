@@ -61,19 +61,20 @@ chrome.runtime.onStartup.addListener(async () => {
 
   // Update lastReminderDate
   chrome.storage.local.set({ lastReminderDate: todayStr });
+});
 
-
-  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && tab.url) {
-      const matched = keywordList.some(keyword => tab.url.toLowerCase().includes(keyword.toLowerCase()));
-      if (matched) {
-        chrome.scripting.executeScript({
-          target: { tabId },
-          files: ['banner.js']
-        });
-      }
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && tab.url) {
+    console.log(tabId, changeInfo.status, tab.url)
+    const matched = keywordList.some(keyword => tab.url.toLowerCase().includes(keyword.toLowerCase()));
+    if (matched) {
+      console.log('Injecting banner for', tab.url);
+      chrome.scripting.executeScript({
+        target: { tabId },
+        files: ['banner.js']
+      }).catch(err => console.error('Script injection failed:', err));
     }
-  });
+  }
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -96,4 +97,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 });
+
+setInterval(() => {
+  console.log("💡 Service worker waiting for signal");
+}, 100000);
 

@@ -48,12 +48,12 @@ const manifest = {
       matches: ["<all_urls>"]
     }
   ],
-  content_scripts: [
-  {
-    matches: ["<all_urls>"],
-    "js": ["banner.js"]
-  }
-]
+//   content_scripts: [
+//   {
+//     matches: ["<all_urls>"],
+//     "js": ["banner.js"]
+//   }
+// ]
 };
 
 fs.writeFileSync(
