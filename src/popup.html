@@ -2,34 +2,53 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Add Job Entry</title>
-  <style>
-    body { font-family: Arial; width: 300px; margin: 10px; }
-    label { display: block; margin-top: 8px; }
-    input, select, button { width: 100%; padding: 5px; margin-top: 4px; }
-  </style>
+  <title>Job Tracker Extension</title>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h3>Add Job Entry</h3>
-  <label>Company:
-    <input type="text" id="company" required>
-  </label>
-  <label>Link:
-    <input type="text" id="link" required>
-  </label>
-  <label>Referrer:
-    <input type="text" id="referrer">
-  </label>
-  <label>Recruiter Email:
-    <input type="email" id="recruiter">
-  </label>
-  <!-- Hidden date field -->
-  <input type="hidden" id="date">
-  <button id="addJobButton">Add Job</button>
-  <hr>
-  <button id="goReport">Report Employee</button>
+  <div id="popupContainer">
+    <header id="appHeader">
+      <img src="/icons/icon48.png" alt="App Logo" id="appLogo" />
+      <h2>NGL - Job Tracker</h2>
+    </header>
 
-  <!-- <script src="firebase-config.js"></script> -->
-  <script src="popup.js"></script>
+    <div id="mainView">
+      <h3>Add Job Entry</h3>
+      <label>Company:
+        <input type="text" id="company" required>
+      </label>
+      <label>Link:
+        <input type="text" id="link" required>
+      </label>
+      <input type="hidden" id="date">
+      <button id="addJobButton">Add Job</button>
+      <hr>
+      <button id="goReport">Report Employee</button>
+    </div>
+
+    <div id="reportView">
+      <h3>Report Recruiter/Referrer</h3>
+      <label>Company:
+        <input type="text" id="repCompany" required>
+      </label>
+      <label>Name:
+        <input type="text" id="repName" required>
+      </label>
+      <label>Contact (email or phone):
+        <input type="text" id="repContact" required>
+      </label>
+      <label>Type:
+        <select id="repType">
+          <option value="referrers">Referrer</option>
+          <option value="recruiters">Recruiter</option>
+        </select>
+      </label>
+      <button id="reportButton">Submit</button>
+      <button id="backBtn">Back</button>
+    </div>
+  </div>
+
+  <script src="popup.js" type="module"></script>
+  <script src="report.js" type="module"></script>
 </body>
 </html>

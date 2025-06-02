@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const esbuild = require("esbuild");
+const { type } = require("os");
 require("dotenv").config();
 
 // Clean dist folder
@@ -27,19 +28,32 @@ const manifest = {
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  permissions: ["identity", "storage", "scripting", "activeTab"],
-  host_permissions: ["https://www.googleapis.com/*"],
+  permissions: ["identity", "storage", "scripting", "activeTab", "tabs"],
+  host_permissions: ["https://www.googleapis.com/*", "<all_urls>"],
   oauth2: {
     client_id: process.env.GOOGLE_CLIENT_ID,
     scopes: ["https://www.googleapis.com/auth/spreadsheets"]
   },
   background: {
-    service_worker: "background.js"
+    service_worker: "background.js",
+    type: "module"
   },
   key: process.env.PUBLIC_KEY_BASE64,
   content_security_policy: {
-    extension_pages: "script-src 'self'; object-src 'self'"
-}
+  extension_pages: "script-src 'self'; object-src 'self';"
+  },
+  web_accessible_resources: [
+    {
+      resources: ["icons/icon48.png"],
+      matches: ["<all_urls>"]
+    }
+  ],
+  content_scripts: [
+  {
+    matches: ["<all_urls>"],
+    "js": ["banner.js"]
+  }
+]
 };
 
 fs.writeFileSync(
@@ -59,6 +73,7 @@ esbuild.buildSync({
   bundle: true,
   define,
   minify: false,
+  platform: "browser",
 });
 
 esbuild.buildSync({
@@ -89,12 +104,24 @@ console.log("✅ JS bundled");
 const copy = (src, dest) => fs.copyFileSync(path.join(__dirname, src), path.join(__dirname, dest));
 
 copy('src/popup.html', 'dist/popup.html');
-copy('src/report.html', 'dist/report.html');
+copy('src/popup.css', 'dist/popup.css');
+copy('src/keywords.json', 'dist/keywords.json');
+
+
 
 // copy('src/firebase-config.js', 'dist/firebase-config.js');
 esbuild.buildSync({
   entryPoints: ['src/firebase-config.js'],
   outfile: 'dist/firebase-config.js',
+  bundle: true,
+  define,
+  minify: false,
+});
+
+// esbuild for banner.js
+esbuild.buildSync({
+  entryPoints: ['src/banner.js'],
+  outfile: 'dist/banner.js',
   bundle: true,
   define,
   minify: false,

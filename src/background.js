@@ -1,3 +1,8 @@
+import keywordList from './keywords.json' assert { type: 'json' };
+import { insertJobToSheet, getRandomReferrer, getRandomRecruiter } from './backend.js'; // or move to sheetUtils.js
+
+console.log("✅ Background script loaded!");
+
 chrome.runtime.onInstalled.addListener(() => {
   // Initialize lastReminderDate to yesterday on install
   const yesterday = new Date(Date.now() - 864e5);
@@ -56,4 +61,39 @@ chrome.runtime.onStartup.addListener(async () => {
 
   // Update lastReminderDate
   chrome.storage.local.set({ lastReminderDate: todayStr });
+
+
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status === 'complete' && tab.url) {
+      const matched = keywordList.some(keyword => tab.url.toLowerCase().includes(keyword.toLowerCase()));
+      if (matched) {
+        chrome.scripting.executeScript({
+          target: { tabId },
+          files: ['banner.js']
+        });
+      }
+    }
+  });
 });
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'addJob') {
+    (async () => {
+      try {
+        const { company, link } = message;
+        const referrer = await getRandomReferrer(company);
+        const recruiter = await getRandomRecruiter(company);
+        const date = new Date().toLocaleDateString();
+        await insertJobToSheet(company, link, referrer, recruiter, date);
+        sendResponse({ success: true });
+      } catch (error) {
+        console.error("Job insertion failed:", error);
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+
+    // Important to keep the message channel open
+    return true;
+  }
+});
+
