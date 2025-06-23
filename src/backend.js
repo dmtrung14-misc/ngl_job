@@ -39,7 +39,7 @@ export async function getRandomRecruiter(company) {
 }
 
 // Add row to Google Sheet
-export async function insertJobToSheet(company, link, referrer, recruiter, date) {
+export async function insertJobToSheet(company, link, referrer, recruiter, date, jobType = 'newgrad') {
   const token = await new Promise((resolve, reject) => {
     chrome.identity.getAuthToken({ interactive: true }, (token) => {
       if (chrome.runtime.lastError || !token) {
@@ -56,18 +56,22 @@ export async function insertJobToSheet(company, link, referrer, recruiter, date)
   };
 
   const spreadsheetId = SPREADSHEET_ID || '1wm5K1d9ScRhvLNYbSXhQuJjFnGr0jPrL0eJfn2bMYKM';
+  
+  // Determine sheet ID based on job type
+  // sheetId 0 = first tab (New Grad), sheetId 1 = second tab (Intern)
+  const sheetId = jobType === 'intern' ? 2033324761 : 0;
 
   const body = {
     requests: [
       {
         insertDimension: {
-          range: { sheetId: 0, dimension: 'ROWS', startIndex: 1, endIndex: 2 },
+          range: { sheetId: sheetId, dimension: 'ROWS', startIndex: 1, endIndex: 2 },
           inheritFromBefore: false,
         },
       },
       {
         updateCells: {
-          start: { sheetId: 0, rowIndex: 1, columnIndex: 0 },
+          start: { sheetId: sheetId, rowIndex: 1, columnIndex: 0 },
           rows: [{
             values: [
               { userEnteredValue: { stringValue: company } },

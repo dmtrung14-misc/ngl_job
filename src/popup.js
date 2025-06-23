@@ -2,6 +2,7 @@ import { getRandomReferrer, getRandomRecruiter, insertJobToSheet } from './backe
 document.addEventListener('DOMContentLoaded', () => {
   const companyInput = document.getElementById('company');
   const linkInput = document.getElementById('link');
+  const jobTypeInput = document.getElementById('jobType');
   const dateInput = document.getElementById('date');
 
   // Prefill link and date
@@ -15,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('addJobButton').addEventListener('click', async () => {
     const company = companyInput.value.trim();
     const link = linkInput.value.trim();
+    const jobType = jobTypeInput.value;
     const date = dateInput.value;
 
     if (!company || !link) {
@@ -28,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         getRandomRecruiter(company),
       ]);
 
-      await insertJobToSheet(company, link, referrer, recruiter, date);
+      await insertJobToSheet(company, link, referrer, recruiter, date, jobType);
       alert('Job added to Sheet!');
       companyInput.value = '';
     } catch (e) {
